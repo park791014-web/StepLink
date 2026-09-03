@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">StepLink</string>
+    <string name="title_activity_main">StepLink</string>
+    <string name="package_name">kr.co.steplink.app</string>
+    <string name="custom_url_scheme">kr.co.steplink.app</string>
+</resources>

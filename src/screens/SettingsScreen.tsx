@@ -11,7 +11,7 @@ export function SettingsScreen({ back, diagnostics }: { back: () => void; diagno
   const update = <K extends keyof Settings>(key: K, value: Settings[K]) => { const next = { ...settings, [key]: value }; setSettings(next); localStorage.setItem('steplink.settings.v1', JSON.stringify(next)) }
   return (
     <div className="screen light-screen">
-      <AppHeader title="설정" subtitle="StepLink 0.1.0" back={back} />
+      <AppHeader title="설정" subtitle="StepLink 0.2.1" back={back} />
       <main className="content settings-content">
         <section className="settings-group"><h2>활동 안내</h2>
           <Toggle label="알림" detail="기록 상태와 행사 공지" value={settings.notifications} change={(value) => update('notifications', value)} />
@@ -28,7 +28,7 @@ export function SettingsScreen({ back, diagnostics }: { back: () => void; diagno
           <button className="settings-link" onClick={diagnostics}><span className="mini-icon"><BatteryIcon/></span><span><strong>배터리 상태</strong><small>소모량과 최적화 설정</small></span><ChevronIcon/></button>
           <button className="settings-link" onClick={() => window.alert('상세 GPS와 사진은 기본적으로 이 휴대폰에만 저장됩니다.')}><span className="mini-icon"><MapPinIcon/></span><span><strong>개인정보 / 데이터 관리</strong><small>Rich on the phone, minimal on the server</small></span><ChevronIcon/></button>
         </section>
-        <section className="app-about"><img src="/brand/steplink-mark.svg" alt=""/><div><strong>StepLink</strong><span>Version 0.1.0 · Android first</span></div></section>
+        <section className="app-about"><img src="/brand/steplink-mark.svg" alt=""/><div><strong>StepLink</strong><span>Version 0.2.1 · Build 3 · Android first</span></div></section>
       </main>
     </div>
   )

@@ -36,7 +36,7 @@ create table public.events (
 create index events_owner_created on public.events(owner_user_id, created_at desc);
 create index events_status_schedule on public.events(status, scheduled_end_at);
 
--- Intentionally isolated from member-readable event rows. A six-digit code has low entropy,
+-- Intentionally isolated from member-readable event rows. A five-character human-entry code has limited entropy,
 -- so Phase 2 must compare a keyed digest (server-held pepper) behind a rate-limited function.
 create table public.event_access_secrets (
   event_id uuid primary key references public.events(id) on delete cascade,

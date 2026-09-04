@@ -1,29 +1,66 @@
 import { useState } from 'react'
+import type { JoinParticipantInput } from '../domain/event/eventTypes'
+import { canonicalizeEventCode, isParticipantEventCode, isSchoolParticipantIdentifier, PARTICIPANT_EVENT_CODE_ALPHABET } from '../domain/event/eventRules'
 import { AppHeader } from '../components/AppHeader'
-import { CompassIcon, GroupIcon } from '../shared/icons'
+import { GroupIcon } from '../shared/icons'
+import { friendlyEventError } from './eventErrors'
 
-export function EventEntryScreen({ mode, back }: { mode: 'participant' | 'operator'; back: () => void }) {
-  const [code, setCode] = useState('')
-  const operator = mode === 'operator'
-  const normalized = code.replace(/[^0-9a-z]/gi, '').toUpperCase().slice(0, operator ? 7 : 6)
+interface Props {
+  back: () => void
+  join: (input: JoinParticipantInput) => Promise<void>
+  busy: boolean
+  error: string | null
+  configured: boolean
+  configurationMessage: string | null
+  recoveryNotice: string | null
+  dismissRecoveryNotice: () => void
+}
+
+export function EventEntryScreen({ back, join, busy, error, configured, configurationMessage, recoveryNotice, dismissRecoveryNotice }: Props) {
+  const [eventCode, setEventCode] = useState('')
+  const [participantIdentifier, setParticipantIdentifier] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [generalIdentifier, setGeneralIdentifier] = useState(false)
+  const [configurationNotice, setConfigurationNotice] = useState<string | null>(null)
+  const normalizedCode = canonicalizeEventCode(eventCode).slice(0, 5)
+  const normalizedIdentifier = generalIdentifier ? participantIdentifier.slice(0, 80) : participantIdentifier.replace(/\D/g, '').slice(0, 5)
+  const identifierValid = generalIdentifier ? normalizedIdentifier.trim().length > 0 : isSchoolParticipantIdentifier(normalizedIdentifier)
+  const valid = isParticipantEventCode(normalizedCode) && identifierValid && displayName.trim().length > 0
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!valid) return
+    if (!configured) { setConfigurationNotice('Supabase 설정이 필요합니다. .env.local의 public URL과 공개 키를 확인하세요.'); return }
+    setConfigurationNotice(null)
+    await join({ eventCode: normalizedCode, participantIdentifier: normalizedIdentifier.trim(), displayName: displayName.trim() })
+  }
+
   return (
-    <div className={`screen event-entry-screen ${operator ? 'operator-theme' : ''}`}>
-      <AppHeader title={operator ? '행사 운영' : '행사 참가'} subtitle={operator ? 'OWNER · OPERATOR' : 'PARTICIPANT'} back={back} />
+    <div className="screen event-entry-screen">
+      <AppHeader title="행사 참가" subtitle="PARTICIPANT" back={back} />
       <main className="content event-content">
-        <span className="event-glyph">{operator ? <CompassIcon /> : <GroupIcon />}</span>
+        <span className="event-glyph"><GroupIcon /></span>
         <div className="section-heading">
-          <span className="eyebrow">{operator ? 'CONTROL THE FLOW' : 'JOIN THE MOMENT'}</span>
-          <h1>{operator ? <>행사의 모든 순간을<br/>안전하게 연결하세요.</> : <>함께 걸을 준비,<br/>되셨나요?</>}</h1>
-          <p>{operator ? '운영 코드를 입력해 행사 현황과 참가자를 관리합니다.' : '안내받은 6자리 행사 코드를 입력하세요.'}</p>
+          <span className="eyebrow">JOIN THE MOMENT</span>
+          <h1>함께 걸을 준비,<br/>되셨나요?</h1>
+          <p>행사가 참가를 연 뒤에만 입장할 수 있습니다. 같은 정보로 다시 입장하면 기존 참가 기록에 연결됩니다.</p>
         </div>
-        <label className="code-field">
-          <span>{operator ? '운영 코드' : '행사 코드'}</span>
-          <input inputMode={operator ? 'text' : 'numeric'} autoCapitalize="characters" value={normalized} onChange={(event) => setCode(event.target.value)} placeholder={operator ? '000000A' : '000000'} />
-          <small>{operator ? '숫자 6자리 + 영문 1자리' : '숫자 6자리'}</small>
-        </label>
-        <button className="start-button" disabled={normalized.length !== (operator ? 7 : 6)} onClick={() => window.alert('Phase 2에서 Supabase 행사 인증과 연결됩니다.')}><span>{operator ? '운영 화면으로' : '행사 입장'}</span><i>→</i></button>
-        <aside className="phase-note"><strong>연결 준비 완료</strong><p>역할·세션 모델과 서버 스키마가 준비되어 있습니다. 실제 코드 인증은 Phase 2에서 안전한 서버 함수로 연결합니다.</p></aside>
+        {!configured && <ConfigBanner message={configurationMessage} />}
+        {recoveryNotice && <aside className="notice-banner"><button onClick={dismissRecoveryNotice}>×</button><strong>세션 복구 안내</strong><p>{recoveryNotice}</p></aside>}
+        <form className="event-form" onSubmit={(event) => void submit(event)}>
+          <label className="code-field"><span>행사 코드</span><input value={normalizedCode} maxLength={5} autoCapitalize="characters" autoCorrect="off" spellCheck={false} onChange={(event) => setEventCode(canonicalizeEventCode(event.target.value).slice(0, 5))} placeholder="01A7K"/><small className={normalizedCode && !isParticipantEventCode(normalizedCode) ? 'validation-error' : ''}>{normalizedCode && !isParticipantEventCode(normalizedCode) ? `사용할 수 없는 문자입니다. 허용: ${PARTICIPANT_EVENT_CODE_ALPHABET}` : '영문·숫자 5문자(I, L, O 제외) · 학번과 별도 항목'}</small></label>
+          <label className="field"><span>학번 / 식별번호</span><input inputMode={generalIdentifier ? 'text' : 'numeric'} value={normalizedIdentifier} onChange={(event) => setParticipantIdentifier(event.target.value)} placeholder={generalIdentifier ? '참가자 식별번호' : '예: 20315'} /><small>{generalIdentifier ? '일반 행사 식별번호' : '학년 1자리 + 반 2자리 + 번호 2자리'}</small></label>
+          <label className="compact-check"><input type="checkbox" checked={generalIdentifier} onChange={(event) => { setGeneralIdentifier(event.target.checked); setParticipantIdentifier('') }} /><span>학교 행사가 아닌 일반 식별번호 사용</span></label>
+          <label className="field"><span>이름</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value.slice(0, 80))} placeholder="이름을 입력하세요" autoComplete="name" /></label>
+          {(configurationNotice || error) && <p className="error-banner">{configurationNotice ?? friendlyEventError(error!)}</p>}
+          <button className="start-button" disabled={!valid || busy}><span>{busy ? '확인 중…' : '행사 입장'}</span><i>→</i></button>
+        </form>
+        <p className="security-caption">참가자 식별번호는 문자열로 처리되며 다른 참가자에게 공개되지 않습니다.</p>
       </main>
     </div>
   )
+}
+
+export function ConfigBanner({ message }: { message: string | null }) {
+  return <aside className="config-banner"><strong>Supabase 연결 설정 필요</strong><p>{message ?? '환경 설정을 확인하세요.'} 실제 연결 전에는 성공 상태를 만들지 않습니다.</p></aside>
 }

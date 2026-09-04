@@ -10,7 +10,7 @@ React UI
        │         ├─ FusedLocationProviderClient
        │         └─ StepLink SQLite (canonical local record)
        ├─ MapProvider → MapLibre GL JS
-       └─ Phase 2 EventGateway → Supabase (not connected yet)
+       └─ Phase 2 EventGateway → Supabase/Edge (source connected; backend not deployed)
 ```
 
 React callback은 canonical GPS 저장 경로가 아니다. 서비스가 수신한 raw location은 먼저 `activity_points`에 저장되고, 활동 누계도 같은 transaction에서 갱신된다. UI는 마지막으로 본 `sequence` 이후 row만 5초마다 읽고, foreground 복귀 시 즉시 reconciliation한다.
@@ -23,7 +23,7 @@ React callback은 canonical GPS 저장 경로가 아니다. 서비스가 수신�
 - Participant status: `NORMAL`, `STALE_LOCATION`, `LONG_STOP`, `COURSE_DEVIATION`, `HELP_REQUEST`, `COMPLETED`, `OFFLINE`
 - Course geometry는 `FREE`, `SIMPLE`, `DETAILED`와 JSON geometry로 분리해 이후 polygon finish zone을 수용한다.
 
-세션 복원 순서는 개인 activity → participant event session → operator event session이다. Phase 1은 개인 activity의 native 복원을 구현했다. event session용 로컬 table과 공통 세션 discriminated union은 Phase 2 연결을 위해 준비되어 있다.
+Phase 1은 개인 activity의 native 복원을 구현했다. Phase 2에서는 행사 session도 Android Keystore와 `event_local_state`에 연결했으며, 개인 activity와 행사 session이 동시에 존재하면 어느 것도 삭제하지 않고 selector에서 먼저 볼 화면을 선택한다. 자세한 내용은 `PHASE_2.md`를 따른다.
 
 ## 위치 데이터
 
@@ -46,3 +46,7 @@ React callback은 canonical GPS 저장 경로가 아니다. 서비스가 수신�
 ## 지도
 
 `MapProvider`가 style URL과 attribution을 공급한다. 기본값은 개발용 MapLibre demo style이며 production provider가 아니다. 네트워크가 없어 지도 타일이 보이지 않아도 native 기록·거리 계산·종료는 동작한다. 오프라인 지도 캐시는 후속 범위다.
+
+## Phase 1 실제 확인 결과
+
+사용자가 일반 Windows Android Studio에서 build/APK/설치를 성공했고 약 0.41km 야외 보행 중 화면 OFF 기록 및 복귀 후 UI reconciliation을 확인했다. pace·예상 1km 시간·평균속도·GPS diagnostics도 정상 표시됐다. 지도 배경은 표시되지 않았고 원인은 미확정이다. force-stop, 제조사 강제 절전, 수 시간 장기 기록, 모든 process-kill/OS 조합은 여전히 미검증이다.

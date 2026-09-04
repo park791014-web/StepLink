@@ -23,3 +23,9 @@ StepLink에서 확장한 부분:
 - foreground notification 문구와 package/app version을 StepLink로 일치
 
 Capgo background-geolocation은 포함하지 않았다.
+
+## 실제 StepLink 검증 상태
+
+2026-09-03 기준 사용자가 일반 Windows Android Studio에서 StepLink build, APK 생성, 실기기 설치를 성공시켰다. 야외에서 약 0.41km를 걸었고 화면 OFF 중 이동한 뒤 복귀했을 때 거리가 증가해 native SQLite 기록과 UI reconciliation이 계속된 것을 확인했다. pace, 1km 예상시간, 평균속도와 GPS diagnostics도 정상 표시됐다.
+
+이는 NativeGpsTest 결과의 단순 전용이 아니라 StepLink 앱 자체에서 확인한 결과다. 다만 force-stop, 제조사별 강제 절전, 수 시간 장기 기록, 모든 process-kill/OS 조합은 검증하지 않았다. Phase 2는 `NativeGpsPlugin`, `StepLinkLocationService`와 GPS filter/sampling을 수정하지 않았고 별도 `SecureEventSessionPlugin` 및 `event_local_state` migration만 추가했다.

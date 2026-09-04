@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 final class StepLinkDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "steplink.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     StepLinkDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -49,7 +49,8 @@ final class StepLinkDatabase extends SQLiteOpenHelper {
             "segment_index INTEGER NOT NULL,distance_m REAL NOT NULL,duration_ms INTEGER NOT NULL,started_at INTEGER,ended_at INTEGER," +
             "UNIQUE(activity_id,segment_index))");
         db.execSQL("CREATE TABLE event_local_state (event_id TEXT PRIMARY KEY,role TEXT NOT NULL,status TEXT NOT NULL," +
-            "participant_local_id TEXT,session_token_ciphertext TEXT,last_server_sync_at INTEGER,payload_json TEXT,updated_at INTEGER NOT NULL)");
+            "participant_local_id TEXT,subject_id TEXT,event_name TEXT,session_token_ciphertext TEXT,token_kind TEXT," +
+            "last_server_sync_at INTEGER,payload_json TEXT,saved_at INTEGER NOT NULL,updated_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE sync_queue (id INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT NOT NULL,idempotency_key TEXT NOT NULL UNIQUE," +
             "latest_wins_key TEXT,payload_json TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'PENDING',attempt_count INTEGER NOT NULL DEFAULT 0," +
             "next_attempt_at INTEGER,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL)");
@@ -60,7 +61,53 @@ final class StepLinkDatabase extends SQLiteOpenHelper {
         db.execSQL("CREATE INDEX diagnostics_activity_time ON diagnostic_events(activity_id,timestamp)");
     }
 
-    @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
+    @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE event_local_state ADD COLUMN subject_id TEXT");
+            db.execSQL("ALTER TABLE event_local_state ADD COLUMN event_name TEXT");
+            db.execSQL("ALTER TABLE event_local_state ADD COLUMN token_kind TEXT");
+            db.execSQL("ALTER TABLE event_local_state ADD COLUMN saved_at INTEGER");
+            db.execSQL("UPDATE event_local_state SET saved_at=COALESCE(updated_at,?) WHERE saved_at IS NULL", new Object[]{System.currentTimeMillis()});
+        }
+    }
+
+    synchronized void saveEventSession(String eventId, String eventName, String role, String status, String subjectId,
+                                       String ciphertext, String tokenKind, String payloadJson) {
+        long now = System.currentTimeMillis();
+        ContentValues values = new ContentValues();
+        values.put("event_id", eventId); values.put("event_name", eventName); values.put("role", role); values.put("status", status);
+        values.put("subject_id", subjectId); values.put("participant_local_id", "PARTICIPANT".equals(role) ? subjectId : null);
+        values.put("session_token_ciphertext", ciphertext); values.put("token_kind", tokenKind);
+        values.put("payload_json", payloadJson); values.put("saved_at", now); values.put("updated_at", now);
+        getWritableDatabase().insertWithOnConflict("event_local_state", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    synchronized JSONObject latestEventSession() throws Exception {
+        try (Cursor cursor = getReadableDatabase().query("event_local_state", null, null, null, null, null, "saved_at DESC,updated_at DESC", "1")) {
+            if (!cursor.moveToFirst()) return null;
+            JSONObject value = new JSONObject();
+            value.put("eventId", string(cursor, "event_id")); value.put("eventName", nullableString(cursor, "event_name"));
+            value.put("role", string(cursor, "role")); value.put("status", string(cursor, "status"));
+            value.put("subjectId", nullableString(cursor, "subject_id")); value.put("ciphertext", nullableString(cursor, "session_token_ciphertext"));
+            value.put("tokenKind", nullableString(cursor, "token_kind")); value.put("metadata", parseJson(nullableString(cursor, "payload_json")));
+            value.put("savedAt", nullableNumber(cursor, "saved_at")); value.put("updatedAt", number(cursor, "updated_at"));
+            return value;
+        }
+    }
+
+    synchronized void updateEventSession(String eventId, String eventName, String status, String payloadJson) {
+        ContentValues values = new ContentValues();
+        if (eventName != null) values.put("event_name", eventName);
+        if (status != null) values.put("status", status);
+        if (payloadJson != null) values.put("payload_json", payloadJson);
+        values.put("updated_at", System.currentTimeMillis());
+        getWritableDatabase().update("event_local_state", values, "event_id=?", new String[]{eventId});
+    }
+
+    synchronized void clearEventSession(String eventId) {
+        if (eventId == null) getWritableDatabase().delete("event_local_state", null, null);
+        else getWritableDatabase().delete("event_local_state", "event_id=?", new String[]{eventId});
+    }
 
     synchronized JSONObject startActivity(String id, String type, String profile) throws Exception {
         long now = System.currentTimeMillis();
@@ -251,6 +298,7 @@ final class StepLinkDatabase extends SQLiteOpenHelper {
     private static long number(Cursor cursor,String name){ return cursor.getLong(cursor.getColumnIndexOrThrow(name)); }
     private static Object nullableNumber(Cursor cursor,String name){ int index=cursor.getColumnIndexOrThrow(name); return cursor.isNull(index)?JSONObject.NULL:cursor.getLong(index); }
     private static double decimal(Cursor cursor,String name){ return cursor.getDouble(cursor.getColumnIndexOrThrow(name)); }
+    private static Object parseJson(String value) { if (value == null || value.isEmpty()) return JSONObject.NULL; try { return new JSONObject(value); } catch (Exception ignored) { return JSONObject.NULL; } }
     private static void nullableDecimal(JSONObject object,String name,Cursor cursor)throws Exception{int index=cursor.getColumnIndexOrThrow(name);object.put(name,cursor.isNull(index)?JSONObject.NULL:cursor.getDouble(index));}
     @SuppressWarnings("deprecation") private static boolean isMock(Location location){if(Build.VERSION.SDK_INT>=31)return location.isMock();if(Build.VERSION.SDK_INT>=18)return location.isFromMockProvider();return false;}
 }

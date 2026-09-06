@@ -6,6 +6,8 @@ const root = new URL('../../', import.meta.url)
 const app = readFileSync(new URL('src/App.tsx', root), 'utf8')
 const tracker = readFileSync(new URL('src/screens/TrackerScreen.tsx', root), 'utf8')
 const routeMap = readFileSync(new URL('src/components/RouteMap.tsx', root), 'utf8')
+const participantMap = readFileSync(new URL('src/components/ParticipantMap.tsx', root), 'utf8')
+const participantLiveMap = readFileSync(new URL('src/components/ParticipantLiveMap.tsx', root), 'utf8')
 const provider = readFileSync(new URL('src/infrastructure/map/mapProvider.ts', root), 'utf8')
 const migration = readFileSync(new URL('supabase/migrations/20260905040250_phase3_anonymous_peer_locations.sql', root), 'utf8')
 const mainActivity = readFileSync(new URL('android/app/src/main/java/kr/co/steplink/app/MainActivity.java', root), 'utf8')
@@ -17,8 +19,18 @@ const vercel = JSON.parse(readFileSync(new URL('vercel.json', root), 'utf8')) as
 
 test('Vercel serves the Vite SPA and owner/operator deep links', () => {
   assert.equal(vercel.outputDirectory, 'dist')
-  assert.deepEqual(vercel.rewrites, [{ source: '/(.*)', destination: '/index.html' }])
+  assert.deepEqual(vercel.rewrites, [
+    { source: '/operator', destination: '/index.html' },
+    { source: '/owner', destination: '/index.html' },
+  ])
   assert.match(app, /path === '\/operator' \|\| path === '\/owner' \? 'operator' : 'home'/)
+})
+
+test('every MapLibre screen uses the emitted production worker asset', () => {
+  for (const source of [routeMap, participantMap, participantLiveMap]) {
+    assert.match(source, /maplibre-gl-worker\.mjs\?worker&url/)
+    assert.match(source, /maplibregl\.setWorkerUrl\(maplibreWorkerUrl\)/)
+  }
 })
 
 test('desktop operator participants use one scannable row per person', () => {

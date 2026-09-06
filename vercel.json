@@ -5,7 +5,11 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/operator",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/owner",
       "destination": "/index.html"
     }
   ]

@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import type { FeatureCollection, Point } from 'geojson'
 import { activeMapProvider } from '../infrastructure/map/mapProvider'
+
+maplibregl.setWorkerUrl(maplibreWorkerUrl)
 
 interface Location { latitude: number; longitude: number; accuracyM: number | null }
 interface Props { location: Location | null }

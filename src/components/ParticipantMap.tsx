@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import type { FeatureCollection, Point } from 'geojson'
 import type { DashboardParticipant } from '../domain/live/liveTypes'
 import { participantStatusLabel } from '../domain/live/livePolicy'
 import { activeMapProvider } from '../infrastructure/map/mapProvider'
 import { relativeTime } from '../shared/format'
+
+maplibregl.setWorkerUrl(maplibreWorkerUrl)
 
 interface Props { participants: DashboardParticipant[]; selectedId: string | null; focusVersion: number; select: (id: string) => void }
 const dataFor = (participants: DashboardParticipant[]): FeatureCollection<Point> => ({ type: 'FeatureCollection', features: participants.filter((item) => item.latitude != null && item.longitude != null).map((item) => ({ type: 'Feature', id: item.id, geometry: { type: 'Point', coordinates: [item.longitude!, item.latitude!] }, properties: { id: item.id, status: item.status } })) })

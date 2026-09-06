@@ -4,7 +4,9 @@
 
 StepLink는 Vite SPA이며 production output은 `dist/`다. Vercel은 저장소 루트에서 `npm run build`를 실행하고 `dist/`를 정적 배포한다. `/operator` 또는 `/owner`를 직접 열면 행사 생성·운영 진입 화면이 표시되며, 브라우저에 암호화해 저장한 유효한 Owner/Operator 세션이 있으면 기존 행사 운영 화면으로 복원된다.
 
-`vercel.json`은 모든 SPA 경로를 `/index.html`로 rewrite한다. 이는 주소를 바꾸는 redirect가 아니며, `/operator` 직접 접속과 새로고침을 지원한다. Supabase 요청은 기존 hosted HTTPS project로 브라우저에서 직접 전송하며 Vercel proxy나 serverless function을 추가하지 않는다.
+`vercel.json`은 실제 SPA 진입 경로인 `/operator`와 `/owner`만 `/index.html`로 rewrite한다. 이는 주소를 바꾸는 redirect가 아니며 직접 접속과 새로고침을 지원한다. `/assets/*`와 존재하지 않는 정적 파일은 rewrite하지 않으므로 잘못된 JavaScript MIME type을 성공 응답으로 숨기지 않는다. Supabase 요청은 기존 hosted HTTPS project로 브라우저에서 직접 전송하며 Vercel proxy나 serverless function을 추가하지 않는다.
+
+모든 MapLibre 화면은 Vite의 `?worker&url` import로 생성한 hashed worker asset을 명시적으로 사용한다. package가 추론하는 `maplibre-gl-worker.mjs` 상대 경로에 의존하지 않는다.
 
 ## Production 환경변수
 

@@ -45,7 +45,7 @@ Phase 1은 개인 activity의 native 복원을 구현했다. Phase 2에서는 �
 
 ## 지도
 
-`MapProvider`가 style URL과 attribution을 공급한다. 기본값은 개발용 MapLibre demo style이며 production provider가 아니다. 네트워크가 없어 지도 타일이 보이지 않아도 native 기록·거리 계산·종료는 동작한다. 오프라인 지도 캐시는 후속 범위다.
+`MapProvider`가 style URL과 attribution을 공급한다. 기본값은 OpenFreeMap Bright이고 환경 변수로 교체 가능하다. 네트워크가 없어 지도 타일이 보이지 않아도 native 기록·거리 계산·종료는 동작한다. 오프라인 지도 캐시는 후속 범위다.
 
 ## Phase 1 실제 확인 결과
 

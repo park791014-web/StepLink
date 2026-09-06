@@ -8,6 +8,13 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle state) {
         registerPlugin(NativeGpsPlugin.class);
         registerPlugin(SecureEventSessionPlugin.class);
+        registerPlugin(EventSyncQueuePlugin.class);
+        registerPlugin(AppUiPlugin.class);
         super.onCreate(state);
+    }
+
+    @Override
+    public void onBackPressed() {
+        getBridge().getWebView().evaluateJavascript("window.dispatchEvent(new Event('steplink:back'))", null);
     }
 }

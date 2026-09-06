@@ -61,6 +61,7 @@ public class NativeGpsPlugin extends Plugin {
         String activityId = call.getString("activityId");
         if (activityId == null) { call.reject("activityId가 필요합니다."); return; }
         try {
+            if (db.isEventContextActive(activityId)) { call.reject("진행 중인 행사 활동은 행사 종료 전 일시정지할 수 없습니다."); return; }
             getContext().startService(new Intent(getContext(), StepLinkLocationService.class).setAction(StepLinkLocationService.ACTION_PAUSE));
             db.pauseActivity(activityId);
             prefs().edit().putBoolean("serviceActive", false).apply();
@@ -84,12 +85,45 @@ public class NativeGpsPlugin extends Plugin {
         String activityId = call.getString("activityId");
         if (activityId == null) { call.reject("activityId가 필요합니다."); return; }
         try {
+            if (db.isEventContextActive(activityId)) { call.reject("진행 중인 행사 활동은 행사 종료 후 자동으로 저장됩니다."); return; }
             getContext().startService(new Intent(getContext(), StepLinkLocationService.class).setAction(StepLinkLocationService.ACTION_END));
             recordBatteryEnd(activityId);
             JSObject result = new JSObject(); result.put("activity", db.endActivity(activityId));
             prefs().edit().putBoolean("serviceActive", false).remove("activityId").apply();
             call.resolve(result);
         } catch (Exception error) { call.reject("활동을 종료하지 못했습니다.", error); }
+    }
+
+    @PluginMethod public void ensureEventActivity(PluginCall call) {
+        String eventId = call.getString("eventId"), participantId = call.getString("participantId"), eventName = call.getString("eventName");
+        String activityType = call.getString("activityType", "WALK"), profile = call.getString("profile", "balanced");
+        if (eventId == null || participantId == null || eventName == null || getPermissionState("location") != PermissionState.GRANTED) {
+            call.reject("행사 activity 정보와 위치 권한이 필요합니다."); return;
+        }
+        try {
+            JSONObject result = db.ensureEventActivity(eventId, participantId, eventName, activityType, profile);
+            JSONObject activity = result.getJSONObject("activity");
+            String activityId = activity.getString("id"), activeProfile = activity.getString("profile");
+            if (result.optBoolean("created")) rememberStart(activityId, activeProfile);
+            else prefs().edit().putString("activityId", activityId).putString("profile", activeProfile).putBoolean("serviceActive", true).apply();
+            startService(activityId, activeProfile);
+            call.resolve(JSObject.fromJSONObject(result));
+        } catch (Exception error) { call.reject("행사 활동을 연결하지 못했습니다.", error); }
+    }
+
+    @PluginMethod public void endEventActivityContext(PluginCall call) {
+        String eventId = call.getString("eventId"), participantId = call.getString("participantId");
+        if (eventId == null || participantId == null) { call.reject("행사 activity scope가 필요합니다."); return; }
+        try {
+            JSONObject result = db.endEventActivityContext(eventId, participantId);
+            if (result.optBoolean("endedActivity")) {
+                JSONObject activity = result.optJSONObject("activity");
+                if (activity != null) recordBatteryEnd(activity.getString("id"));
+                prefs().edit().putBoolean("serviceActive", false).remove("activityId").apply();
+                getContext().startService(new Intent(getContext(), StepLinkLocationService.class).setAction(StepLinkLocationService.ACTION_END));
+            }
+            call.resolve(JSObject.fromJSONObject(result));
+        } catch (Exception error) { call.reject("행사 활동을 종료하지 못했습니다.", error); }
     }
 
     @PluginMethod public void readPoints(PluginCall call) {
@@ -108,6 +142,14 @@ public class NativeGpsPlugin extends Plugin {
     @PluginMethod public void getActiveActivity(PluginCall call) {
         try { JSObject result = new JSObject(); JSONObject active = db.activeActivity(); result.put("activity", active == null ? JSONObject.NULL : active); call.resolve(result); }
         catch (Exception error) { call.reject("진행 중인 활동을 복원하지 못했습니다.", error); }
+    }
+
+    @PluginMethod public void listCompletedActivities(PluginCall call) {
+        try {
+            JSObject result = new JSObject();
+            result.put("activities", db.completedActivities(call.getInt("limit", 100)));
+            call.resolve(result);
+        } catch (Exception error) { call.reject("완료 활동 목록을 읽지 못했습니다.", error); }
     }
 
     @PluginMethod public void getDiagnostics(PluginCall call) {

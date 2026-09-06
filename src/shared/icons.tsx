@@ -17,3 +17,4 @@ export const StopIcon = (props: IconProps) => <Icon {...props}><rect x="6" y="6"
 export const ChevronIcon = (props: IconProps) => <Icon {...props}><path d="m9 18 6-6-6-6"/></Icon>
 export const BatteryIcon = (props: IconProps) => <Icon {...props}><rect x="3" y="7" width="17" height="10" rx="2"/><path d="M22 10v4M6 10v4M10 10v4M14 10v4"/></Icon>
 export const SatelliteIcon = (props: IconProps) => <Icon {...props}><path d="m5 19 4-4M3 21l2-2M14 4l6 6M12 6l6 6M8 10l6 6M5 8l11 11M16 3l5 5-4 4-5-5 4-4ZM8 10l-3 3 6 6 3-3"/></Icon>
+export const HistoryIcon = (props: IconProps) => <Icon {...props}><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.6"/><path d="M4 4v4.6h4.6M12 8v4l2.7 1.7"/></Icon>

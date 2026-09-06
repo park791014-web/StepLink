@@ -39,12 +39,12 @@ export function EventEntryScreen({ back, join, busy, error, configured, configur
     <div className="screen event-entry-screen">
       <AppHeader title="행사 참가" subtitle="PARTICIPANT" back={back} />
       <main className="content event-content">
-        <span className="event-glyph"><GroupIcon /></span>
+        <div className="compact-page-hero"><span className="event-glyph"><GroupIcon /></span>
         <div className="section-heading">
           <span className="eyebrow">JOIN THE MOMENT</span>
-          <h1>함께 걸을 준비,<br/>되셨나요?</h1>
+          <h1>함께 걸을 준비, 되셨나요?</h1>
           <p>행사가 참가를 연 뒤에만 입장할 수 있습니다. 같은 정보로 다시 입장하면 기존 참가 기록에 연결됩니다.</p>
-        </div>
+        </div></div>
         {!configured && <ConfigBanner message={configurationMessage} />}
         {recoveryNotice && <aside className="notice-banner"><button onClick={dismissRecoveryNotice}>×</button><strong>세션 복구 안내</strong><p>{recoveryNotice}</p></aside>}
         <form className="event-form" onSubmit={(event) => void submit(event)}>

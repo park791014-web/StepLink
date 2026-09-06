@@ -4,10 +4,23 @@ export type ActivityStatus = 'READY' | 'ACTIVE' | 'PAUSED' | 'COMPLETED'
 export type TrackingProfile = 'accurate' | 'balanced' | 'battery'
 export type EventStatus = 'DRAFT' | 'OPEN' | 'ACTIVE' | 'ENDED'
 export type ParticipantStatus = 'NORMAL' | 'STALE_LOCATION' | 'LONG_STOP' | 'COURSE_DEVIATION' | 'HELP_REQUEST' | 'COMPLETED' | 'OFFLINE'
+export type ActivitySource = 'PERSONAL' | 'EVENT_AUTO'
+
+export interface ActivityEventContext {
+  eventId: string
+  participantId: string
+  eventName: string
+  active: boolean
+  createdActivity: boolean
+  joinedAt: number
+  endedAt: number | null
+}
 
 export interface Activity {
   id: string
   eventId: string | null
+  source: ActivitySource
+  eventContext: ActivityEventContext | null
   type: ActivityType
   status: ActivityStatus
   profile: TrackingProfile

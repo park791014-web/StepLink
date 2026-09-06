@@ -4,7 +4,7 @@ import { AppHeader } from '../components/AppHeader'
 import { LazyRouteMap } from '../components/LazyRouteMap'
 import { formatDistance, formatPace } from '../shared/format'
 
-export function SummaryScreen({ activity, points, done }: { activity: Activity; points: ActivityPoint[]; done: () => void }) {
+export function SummaryScreen({ activity, points, done, doneLabel = '홈으로' }: { activity: Activity; points: ActivityPoint[]; done: () => void; doneLabel?: string }) {
   const elapsed = Math.max(0, (activity.endedAt ?? Date.now()) - activity.startedAt - activity.pauseDurationMs)
   return (
     <div className="screen light-screen">
@@ -12,6 +12,7 @@ export function SummaryScreen({ activity, points, done }: { activity: Activity; 
       <main className="content summary-content">
         <div className="summary-seal"><span>✓</span><small>COMPLETED</small></div>
         <h1>오늘도 한 걸음,<br/><em>멋지게 완료했어요.</em></h1>
+        {activity.eventContext && <p className="summary-event-context"><strong>{activity.eventContext.eventName}</strong><span>행사 참여 · {activity.type === 'RUN' ? '달리기' : activity.type === 'WALK' ? '걷기' : '활동'}</span></p>}
         <LazyRouteMap points={points} compact />
         <section className="summary-grid">
           <div className="summary-main"><strong>{formatDistance(activity.filteredDistanceM)}</strong><span>km</span><small>총 거리</small></div>
@@ -21,7 +22,7 @@ export function SummaryScreen({ activity, points, done }: { activity: Activity; 
           <div><strong>{estimatedCalories(activity.filteredDistanceM, 65, activity.type)} kcal</strong><small>예상 칼로리</small></div>
         </section>
         <p className="local-badge">휴대폰에 저장됨 · 상세 GPS는 서버로 전송되지 않았습니다</p>
-        <button className="secondary-button" onClick={done}>홈으로</button>
+        <button className="secondary-button" onClick={done}>{doneLabel}</button>
       </main>
     </div>
   )

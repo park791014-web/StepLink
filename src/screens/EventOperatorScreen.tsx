@@ -50,18 +50,16 @@ export function EventOperatorScreen({ back, create, join, busy, error, configure
     <div className="screen event-entry-screen operator-theme">
       <AppHeader title="행사 운영" subtitle="OWNER · OPERATOR" back={back} />
       <main className="content event-content operator-content">
-        <span className="event-glyph"><CompassIcon /></span>
-        <div className="section-heading"><span className="eyebrow">CONTROL THE FLOW</span><h1>행사의 모든 순간을<br/>안전하게 연결하세요.</h1></div>
+        <div className="compact-page-hero"><span className="event-glyph"><CompassIcon /></span><div className="section-heading"><span className="eyebrow">CONTROL THE FLOW</span><h1>행사의 모든 순간을 안전하게 연결하세요.</h1></div></div>
         {!configured && <ConfigBanner message={configurationMessage} />}
         {recoveryNotice && <aside className="notice-banner"><button onClick={dismissRecoveryNotice}>×</button><strong>세션 복구 안내</strong><p>{recoveryNotice}</p></aside>}
         <div className="segment-tabs"><button className={mode === 'create' ? 'active' : ''} onClick={() => setMode('create')}>새 행사</button><button className={mode === 'join' ? 'active' : ''} onClick={() => setMode('join')}>운영 코드</button></div>
         {mode === 'create' ? (
           <form className="event-form" onSubmit={(event) => void submitCreate(event)}>
             <label className="field"><span>행사명 *</span><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value.slice(0, 120) })} placeholder="예: 2026 시민공원 걷기" /></label>
-            <div className="field-pair"><label className="field"><span>행사일 *</span><input type="date" value={form.eventDate} onChange={(event) => setForm({ ...form, eventDate: event.target.value })}/></label><label className="field"><span>예상 참가 인원 *</span><input type="number" min="1" max="10000" value={form.expectedParticipants} onChange={(event) => setForm({ ...form, expectedParticipants: event.target.value })}/></label></div>
             <label className="field"><span>참가자 행사 코드 (선택)</span><input value={participantCode} maxLength={5} autoCapitalize="characters" autoCorrect="off" spellCheck={false} onChange={(event) => setForm({ ...form, requestedParticipantCode: canonicalizeEventCode(event.target.value).slice(0, 5) })} placeholder="예: 01A7K · 미입력 시 서버 생성"/><small className={participantCode && !isParticipantEventCode(participantCode) ? 'validation-error' : ''}>{participantCode && !isParticipantEventCode(participantCode) ? `사용할 수 없는 문자입니다. 허용: ${PARTICIPANT_EVENT_CODE_ALPHABET}` : '숫자 0~9 허용, 영문 I/L/O 제외. 중복 여부는 서버가 확인합니다.'}</small></label>
             <div className="field-pair schedule-pair"><label className="field"><span>시작 예정</span><input type="datetime-local" value={form.scheduledStartAt} onChange={(event) => setForm({ ...form, scheduledStartAt: event.target.value })}/></label><label className="field"><span>종료 예정</span><input type="datetime-local" value={form.scheduledEndAt} onChange={(event) => setForm({ ...form, scheduledEndAt: event.target.value })}/></label></div>
-            <label className="field"><span>행사 종료 메시지</span><textarea value={form.endMessage} onChange={(event) => setForm({ ...form, endMessage: event.target.value.slice(0, 1000) })} placeholder="참여해주셔서 감사합니다." /></label>
+            <label className="field"><span>행사 종료 메시지</span><textarea className="single-line-textarea" rows={1} value={form.endMessage} onChange={(event) => setForm({ ...form, endMessage: event.target.value.slice(0, 1000) })} placeholder="참여해주셔서 감사합니다." /></label>
             {(configurationNotice || error) && <p className="error-banner">{configurationNotice ?? friendlyEventError(error!)}</p>}
             <button className="start-button" disabled={!validCreate || busy}><span>{busy ? '생성 중…' : '준비중 행사 만들기'}</span><i>→</i></button>
           </form>

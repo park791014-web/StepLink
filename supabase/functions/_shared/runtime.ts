@@ -74,6 +74,14 @@ export function operatorCode(participantEventCode: string) {
   return `${participantEventCode}${randomOperatorCodeSuffix()}`
 }
 
+export function currentServiceDate(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now)
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${value.year}-${value.month}-${value.day}`
+}
+
 export async function enforceRateLimit(admin: SupabaseClient, pepper: string, req: Request, userId: string, purpose: string, maximum: number) {
   const ip = (req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? 'unknown').split(',')[0].trim()
   const userFingerprint = await hmacDigest(pepper, 'rate-user', userId)

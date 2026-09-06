@@ -1,12 +1,12 @@
 import { AppHeader } from '../components/AppHeader'
-import { CompassIcon, FootIcon, GroupIcon } from '../shared/icons'
+import { CompassIcon, FootIcon, GroupIcon, HistoryIcon } from '../shared/icons'
 
-interface Props { navigate: (screen: 'personal' | 'participant' | 'operator' | 'settings') => void }
+interface Props { navigate: (screen: 'personal' | 'participant' | 'operator' | 'history' | 'settings' | 'event-session') => void; back?: () => void; activeOwnerEvent?: { name: string } }
 
-export function HomeScreen({ navigate }: Props) {
+export function HomeScreen({ navigate, back, activeOwnerEvent }: Props) {
   return (
     <div className="screen home-screen">
-      <AppHeader settings={() => navigate('settings')} />
+      <AppHeader back={back} settings={() => navigate('settings')} />
       <main className="home-content">
         <section className="welcome">
           <span className="eyebrow">MOVE · CONNECT · REMEMBER</span>
@@ -14,6 +14,11 @@ export function HomeScreen({ navigate }: Props) {
           <p>나만의 운동부터 모두가 함께하는 행사까지, 길 위의 모든 순간을 연결합니다.</p>
         </section>
         <section className="entry-grid" aria-label="시작 메뉴">
+          {activeOwnerEvent && <button className="entry-card active-event-card" onClick={() => navigate('event-session')}>
+            <span className="entry-icon blue"><CompassIcon /></span>
+            <span className="entry-copy"><strong>진행 중 행사</strong><small>{activeOwnerEvent.name} 운영 화면으로 돌아가기</small></span>
+            <span className="entry-arrow">돌아가기</span>
+          </button>}
           <button className="entry-card primary-card" onClick={() => navigate('personal')}>
             <span className="entry-icon"><FootIcon /></span>
             <span className="entry-copy"><strong>개인 운동</strong><small>걷기와 달리기를 자유롭게 기록해요</small></span>
@@ -28,6 +33,11 @@ export function HomeScreen({ navigate }: Props) {
             <span className="entry-icon blue"><CompassIcon /></span>
             <span className="entry-copy"><strong>행사 운영</strong><small>참가자와 진행 상황을 한눈에</small></span>
             <span className="entry-arrow">관리</span>
+          </button>
+          <button className="entry-card" onClick={() => navigate('history')}>
+            <span className="entry-icon lime"><HistoryIcon /></span>
+            <span className="entry-copy"><strong>활동 기록</strong><small>휴대폰에 저장된 완료 활동을 확인해요</small></span>
+            <span className="entry-arrow">보기</span>
           </button>
         </section>
         <p className="privacy-line"><span>●</span> 상세 경로와 사진은 내 휴대폰에 안전하게 보관됩니다</p>

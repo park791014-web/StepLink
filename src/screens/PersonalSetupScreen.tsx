@@ -24,7 +24,7 @@ export function PersonalSetupScreen({ back, begin, error }: Props) {
     <div className="screen light-screen">
       <AppHeader title="개인 운동" subtitle="나만의 리듬으로" back={back} />
       <main className="content setup-content">
-        <section className="section-heading"><span className="eyebrow">ACTIVITY</span><h1>어떤 움직임을<br/>기록할까요?</h1></section>
+        <section className="compact-page-hero personal-hero"><span className="event-glyph"><FootIcon /></span><div className="section-heading"><span className="eyebrow">ACTIVITY</span><h1>어떤 움직임을 기록할까요?</h1></div></section>
         <div className="activity-types">
           {types.map((item) => (
             <button key={item.id} className={`activity-type ${type === item.id ? 'selected' : ''}`} onClick={() => setType(item.id)}>

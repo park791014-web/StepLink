@@ -1,4 +1,4 @@
-import { endpoint, enforceRateLimit, hmacDigest, HttpError, randomToken } from '../_shared/runtime.ts'
+import { currentServiceDate, endpoint, enforceRateLimit, hmacDigest, HttpError, randomToken } from '../_shared/runtime.ts'
 import { canonicalizeEventCode, isOperatorEventCode } from '../_shared/eventCodePolicy.ts'
 
 Deno.serve((req) => endpoint(req, async ({ admin, user, pepper, body }) => {
@@ -6,7 +6,9 @@ Deno.serve((req) => endpoint(req, async ({ admin, user, pepper, body }) => {
   const code = canonicalizeEventCode(typeof body.operatorCode === 'string' ? body.operatorCode : '')
   if (!isOperatorEventCode(code)) throw new HttpError(400, 'INVALID_OPERATOR_CODE_FORMAT')
   const digest = await hmacDigest(pepper, 'operator-code', code)
-  const { data: secret, error: secretError } = await admin.from('event_access_secrets').select('event_id').eq('operator_code_digest', digest).maybeSingle()
+  const { data: secret, error: secretError } = await admin.from('event_access_secrets').select('event_id,event_date')
+    .eq('operator_code_digest', digest).eq('lookup_active', true).lte('event_date', currentServiceDate())
+    .order('event_date', { ascending: false }).limit(1).maybeSingle()
   if (secretError) throw new HttpError(500, 'EVENT_LOOKUP_FAILED')
   if (!secret) throw new HttpError(404, 'OPERATOR_CODE_NOT_FOUND')
 
@@ -17,7 +19,7 @@ Deno.serve((req) => endpoint(req, async ({ admin, user, pepper, body }) => {
     target_session_token_digest: await hmacDigest(pepper, 'event-session', eventSessionToken),
   })
   if (error) throw new HttpError(400, error.message)
-  const { data: event, error: eventError } = await admin.from('events').select('id,owner_user_id,name,event_date,expected_participants,scheduled_start_at,scheduled_end_at,end_message,status,created_at,started_at,ended_at').eq('id', secret.event_id).single()
+  const { data: event, error: eventError } = await admin.from('events').select('id,owner_user_id,name,event_date,expected_participants,scheduled_start_at,scheduled_end_at,auto_close_at,end_message,status,created_at,started_at,ended_at').eq('id', secret.event_id).single()
   if (eventError) throw new HttpError(500, 'EVENT_READ_FAILED')
   return { event, membership: { userId: membership.user_id, role: membership.role }, eventSessionToken }
 }))

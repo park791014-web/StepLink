@@ -6,10 +6,14 @@ export interface MapProvider {
   productionReady: boolean
 }
 
+const configuredStyle = import.meta.env.VITE_MAP_STYLE_URL?.trim()
+const openFreeMapStyle = 'https://tiles.openfreemap.org/styles/bright'
+const selectedStyle = configuredStyle || openFreeMapStyle
+
 export const activeMapProvider: MapProvider = {
-  id: import.meta.env.VITE_MAP_STYLE_URL ? 'configured' : 'maplibre-demo',
-  label: import.meta.env.VITE_MAP_STYLE_URL ? '설정된 지도' : 'MapLibre 데모 지도',
-  styleUrl: import.meta.env.VITE_MAP_STYLE_URL || 'https://demotiles.maplibre.org/style.json',
-  attribution: import.meta.env.VITE_MAP_ATTRIBUTION || 'MapLibre demo tiles',
-  productionReady: Boolean(import.meta.env.VITE_MAP_STYLE_URL),
+  id: selectedStyle === openFreeMapStyle ? 'openfreemap' : 'configured',
+  label: selectedStyle === openFreeMapStyle ? 'OpenFreeMap Bright' : '설정된 지도',
+  styleUrl: selectedStyle,
+  attribution: import.meta.env.VITE_MAP_ATTRIBUTION || 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
+  productionReady: true,
 }

@@ -1,13 +1,14 @@
 {
   "name": "steplink",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test src/domain/activity/activityMath.test.ts src/domain/event/eventRules.test.ts src/infrastructure/secure-session/webEncryptedStorage.test.ts src/infrastructure/supabase/eventGatewayErrors.test.ts",
+    "test": "node --test src/components/routeMapData.test.ts src/components/walkingPlatformContract.test.ts src/domain/activity/activityMath.test.ts src/domain/event/eventRules.test.ts src/domain/live/livePolicy.test.ts src/infrastructure/native/activityHistoryContract.test.ts src/infrastructure/secure-session/webEncryptedStorage.test.ts src/infrastructure/supabase/eventGatewayErrors.test.ts src/infrastructure/supabase/networkDiagnostics.test.ts src/infrastructure/supabase/phase3MigrationContract.test.ts src/infrastructure/supabase/phase3HardeningMigrationContract.test.ts src/infrastructure/sync/nativeLiveSyncContract.test.ts src/infrastructure/sync/syncPolicy.test.ts",
+    "load:phase3": "node scripts/phase3-load-simulation.mjs",
     "preview": "vite preview",
     "cap:sync": "npx cap sync android",
     "android:debug": "npm run build && npm run cap:sync && cd android && gradlew.bat assembleDebug"

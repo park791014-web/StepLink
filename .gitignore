@@ -6,6 +6,7 @@ dist/
 .env.*.local
 supabase/functions/.env
 supabase/functions/.env.local
+supabase/.temp/
 android/.gradle/
 android/local.properties
 android/app/build/
